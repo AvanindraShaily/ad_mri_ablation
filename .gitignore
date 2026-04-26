@@ -1,3 +1,20 @@
+# Dataset - too large for git
+Alzheimer (Preprocessed Data)/
+archive/
+*.jpg
+*.jpeg
+*.png
+
+# Virtual environment
+venv/
+
+# PyTorch checkpoints
+*.pth
+*.pt
+
+# Cache
+__pycache__/
+.cache/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
