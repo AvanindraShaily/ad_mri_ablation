@@ -1,7 +1,7 @@
 import sys
 sys.path.append(".")
 import torch
-from models.base_models import get_model
+from scripts.base_models import get_model
 
 device = torch.device("cuda")
 dummy = torch.randn(4, 3, 224, 224).to(device)

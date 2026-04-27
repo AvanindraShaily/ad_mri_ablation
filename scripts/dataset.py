@@ -86,11 +86,11 @@ def load_dataset(data_dir, test_size=0.2, val_size=0.1, seed=42, batch_size=32):
 
     # Create dataloaders
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True,
-                              num_workers=2, pin_memory=True)
+                              num_workers=0, pin_memory=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False,
-                            num_workers=2, pin_memory=True)
+                            num_workers=0, pin_memory=True)
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False,
-                             num_workers=2, pin_memory=True)
+                             num_workers=0, pin_memory=True)
 
     # Print summary
     print(f"Classes: {class_names}")
