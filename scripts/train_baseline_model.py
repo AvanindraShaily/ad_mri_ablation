@@ -11,21 +11,43 @@ sys.path.insert(0, script_dir)
 from base_models import get_model
 from dataset import load_dataset
 
-# ---- Config ----
-DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "datalib", "sachin_kumar_ad_dataset")
-MODEL_NAME = "resnet18"
-BATCH_SIZE = 32
+MODE = "wavelet"                # "raw" for 2D images, "wavelet" for 3D DT-CWT features
+MODEL_NAME = "resnet18"     # resnet18, resnet50, efficientnet_b0, mobilenet_v2, deit_tiny
 EPOCHS = 20
+BATCH_SIZE = 32
 LR = 1e-4
-DEVICE = torch.device("cuda")
-RESULTS_DIR = os.path.join(os.path.dirname(__file__), "..", "results")
+
+PROJECT_ROOT = os.path.join(os.path.dirname(__file__), "..")
+RAW_DATA_DIR = os.path.join(PROJECT_ROOT, "Alzheimer (Preprocessed Data)")
+WAVELET_DATA_DIR = os.path.join(PROJECT_ROOT, "data", "dtcwt_preprocessed")
+RESULTS_DIR = os.path.join(PROJECT_ROOT, "results")
+
+DATA_DIR = WAVELET_DATA_DIR if MODE == "wavelet" else RAW_DATA_DIR
+IN_CHANNELS = 13 if MODE == "wavelet" else 3
+
+if torch.cuda.is_available():
+    DEVICE = torch.device("cuda")
+else:
+    DEVICE = torch.device("cpu")
+
+os.makedirs(RESULTS_DIR, exist_ok=True)
+
+print(f"{'='*50}")
+print(f"Mode:       {MODE}")
+print(f"Data dir:   {DATA_DIR}")
+print(f"Model:      {MODEL_NAME}")
+print(f"In channels:{IN_CHANNELS}")
+print(f"Device:     {DEVICE}")
+print(f"{'='*50}")
 
 # ---- Data ----
-train_loader, val_loader, test_loader, class_names = load_dataset(DATA_DIR, batch_size=BATCH_SIZE)
+train_loader, val_loader, test_loader, class_names = load_dataset(
+    DATA_DIR, mode=MODE, batch_size=BATCH_SIZE
+)
 num_classes = len(class_names)
 
 # ---- Model ----
-model = get_model(MODEL_NAME, num_classes=num_classes).to(DEVICE)
+model = get_model(MODEL_NAME, num_classes=num_classes, in_channels=IN_CHANNELS).to(DEVICE)
 
 # ---- Class weights for imbalance ----
 train_labels = train_loader.dataset.labels
@@ -98,14 +120,17 @@ for epoch in range(EPOCHS):
     # Save best model
     if val_acc > best_val_acc:
         best_val_acc = val_acc
-        save_path = os.path.join(RESULTS_DIR, f"{MODEL_NAME}_best.pth")
+        save_path = os.path.join(RESULTS_DIR, f"{MODEL_NAME}_{MODE}_best.pth")
         torch.save(model.state_dict(), save_path)
         print(f"  -> Saved best model (val acc: {val_acc:.4f})")
 
 # ---- Test evaluation ----
 print(f"\n{'='*50}")
 print("Testing best model...")
-model.load_state_dict(torch.load(os.path.join(RESULTS_DIR, f"{MODEL_NAME}_best.pth")))
+model.load_state_dict(torch.load(
+    os.path.join(RESULTS_DIR, f"{MODEL_NAME}_{MODE}_best.pth"),
+    map_location=DEVICE
+))
 model.eval()
 
 test_correct = 0
