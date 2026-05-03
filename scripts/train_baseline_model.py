@@ -11,15 +11,16 @@ sys.path.insert(0, script_dir)
 from base_models import get_model
 from dataset import load_dataset
 
+DATASET = "OASIS" # "OASIS" or "Alzheimer (Preprocessed Data)"
 MODE = "wavelet"                # "raw" for 2D images, "wavelet" for 3D DT-CWT features
 MODEL_NAME = "resnet18"     # resnet18, resnet50, efficientnet_b0, mobilenet_v2, deit_tiny
 EPOCHS = 20
 BATCH_SIZE = 32
 LR = 1e-4
 
-PROJECT_ROOT = os.path.join(os.path.dirname(__file__), "..")
-RAW_DATA_DIR = os.path.join(PROJECT_ROOT, "Alzheimer (Preprocessed Data)")
-WAVELET_DATA_DIR = os.path.join(PROJECT_ROOT, "data", "dtcwt_preprocessed")
+PROJECT_ROOT = os.path.dirname(os.path.dirname(__file__))
+RAW_DATA_DIR = os.path.join(PROJECT_ROOT, DATASET)
+WAVELET_DATA_DIR = os.path.join(RAW_DATA_DIR, "dtcwt_preprocessed")
 RESULTS_DIR = os.path.join(PROJECT_ROOT, "results")
 
 DATA_DIR = WAVELET_DATA_DIR if MODE == "wavelet" else RAW_DATA_DIR
