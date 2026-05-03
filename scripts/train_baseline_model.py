@@ -16,6 +16,7 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "datalib", "sachin_kuma
 MODEL_NAME = "resnet18"
 BATCH_SIZE = 32
 EPOCHS = 20
+USE_CBAM = True
 LR = 1e-4
 DEVICE = torch.device("cuda")
 RESULTS_DIR = os.path.join(os.path.dirname(__file__), "..", "results")
@@ -25,8 +26,13 @@ train_loader, val_loader, test_loader, class_names = load_dataset(DATA_DIR, batc
 num_classes = len(class_names)
 
 # ---- Model ----
-model = get_model(MODEL_NAME, num_classes=num_classes).to(DEVICE)
-
+if USE_CBAM:
+    from models_with_cbam import get_model_with_attention
+    model = get_model_with_attention(MODEL_NAME, num_classes=num_classes).to(DEVICE)
+    print(f"Loaded {MODEL_NAME} WITH attention")
+else:
+    model = get_model(MODEL_NAME, num_classes=num_classes).to(DEVICE)
+    print(f"Loaded {MODEL_NAME} baseline (no attention)")
 # ---- Class weights for imbalance ----
 train_labels = train_loader.dataset.labels
 class_counts = [train_labels.count(i) for i in range(num_classes)]
@@ -98,15 +104,15 @@ for epoch in range(EPOCHS):
     # Save best model
     if val_acc > best_val_acc:
         best_val_acc = val_acc
-        save_path = os.path.join(RESULTS_DIR, f"{MODEL_NAME}_best.pth")
+        suffix = "_cbam" if USE_CBAM else ""
+        save_path = os.path.join(RESULTS_DIR, f"{MODEL_NAME}{suffix}_best.pth")
         torch.save(model.state_dict(), save_path)
         print(f"  -> Saved best model (val acc: {val_acc:.4f})")
 
 # ---- Test evaluation ----
 print(f"\n{'='*50}")
 print("Testing best model...")
-model.load_state_dict(torch.load(os.path.join(RESULTS_DIR, f"{MODEL_NAME}_best.pth")))
-model.eval()
+model.load_state_dict(torch.load(os.path.join(RESULTS_DIR, f"{MODEL_NAME}{suffix}_best.pth")))
 
 test_correct = 0
 test_total = 0
