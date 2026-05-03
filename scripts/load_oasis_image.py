@@ -38,7 +38,7 @@ def preprocess(base_dir, hdr_path, cdr, count):
     z_end = z_mid + 17
 
     for z in range(z_start, z_end+1):
-        save_path = os.path.join(base_dir, "OASIS", "processed", cdr, f"{cdr}_{count}.jpg")
+        save_path = os.path.join(base_dir, "OASIS", cdr, f"{cdr}_{count}.jpg")
         one_slice = data[:, :, z, 0]
         # Rotate 90 degrees clockwise
         one_slice = np.rot90(one_slice, k=-1)
@@ -100,7 +100,7 @@ if __name__ == "__main__":
         print(f"CDR {cdr_label}: {len(subjects)} subjects - {subjects}")
 
     for cdr in cdr_dict.keys():
-        os.makedirs(os.path.join(base_dir, "OASIS", "processed", cdr), exist_ok=True)
+        os.makedirs(os.path.join(base_dir, "OASIS", cdr), exist_ok=True)
         count = 0
         for subject in cdr_dict[cdr]:
             file_path = os.path.join(disc_dir, f"OAS1_{subject}_MR1", "PROCESSED", "MPRAGE", "T88_111", f"OAS1_{subject}_MR1_mpr_n4_anon_111_t88_masked_gfc.img")
