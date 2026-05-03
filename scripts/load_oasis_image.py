@@ -1,6 +1,8 @@
 import os
 import argparse
 import numpy as np
+from skimage.transform import resize
+
 
 try:
     import nibabel as nib
@@ -40,7 +42,7 @@ def preprocess(base_dir, hdr_path, cdr, count):
     for z in range(z_start, z_end+1):
         save_path = os.path.join(base_dir, "OASIS", cdr, f"{cdr}_{count}.jpg")
         one_slice = data[:, :, z, 0]
-        # Rotate 90 degrees clockwise
+        one_slice = resize(one_slice, (128, 128))
         one_slice = np.rot90(one_slice, k=-1)
         plt.imsave(save_path, one_slice, cmap='gray')
         count += 1
