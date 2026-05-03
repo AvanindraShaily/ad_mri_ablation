@@ -9,7 +9,7 @@ from PIL import Image
 from scipy.ndimage import zoom
 import dtcwt
 
-dataset_name = "Alzheimer (Preprocessed Data)" # "OASIS" or "Alzheimer (Preprocessed Data)"
+dataset_name = "OASIS" # "OASIS" or "Alzheimer (Preprocessed Data)"
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 INPUT_DIR = os.path.join(PROJECT_ROOT, dataset_name)
@@ -52,10 +52,8 @@ def dtcwt_preprocess(image_path, nlevels=NLEVELS, target_size=TARGET_SIZE):
 
 def main():
     class_names = [
-        "Very_Mild_Demented",
-        "Mild_Demented",
-        "Moderate_Demented",
-        "Non_Demented"
+        d for d in os.listdir(INPUT_DIR)
+        if os.path.isdir(os.path.join(INPUT_DIR, d)) and d != "dtcwt_preprocessed"
     ]
 
     for cls_name in class_names:
