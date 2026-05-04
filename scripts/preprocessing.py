@@ -1,12 +1,19 @@
 import os
 import sys
 import numpy as np
+if not hasattr(np, 'asfarray'):
+    np.asfarray = lambda a, dtype=float: np.asarray(a, dtype=dtype)
+if not hasattr(np, 'issubsctype'):
+    np.issubsctype = np.issubdtype
 from PIL import Image
 from scipy.ndimage import zoom
 import dtcwt
 
-INPUT_DIR = "/Users/kchen339/Research/Class/BMI 767/ad_mri_ablation/Alzheimer (Preprocessed Data)"
-OUTPUT_DIR = "/Users/kchen339/Research/Class/BMI 767/ad_mri_ablation/data/dtcwt_preprocessed"
+dataset_name = "OASIS" # "OASIS" or "Alzheimer (Preprocessed Data)"
+
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+INPUT_DIR = os.path.join(PROJECT_ROOT, dataset_name)
+OUTPUT_DIR = os.path.join(INPUT_DIR, "dtcwt_preprocessed")
 
 NLEVELS = 2
 TARGET_SIZE = 128
@@ -45,10 +52,8 @@ def dtcwt_preprocess(image_path, nlevels=NLEVELS, target_size=TARGET_SIZE):
 
 def main():
     class_names = [
-        "Very_Mild_Demented",
-        "Mild_Demented",
-        "Moderate_Demented",
-        "Non_Demented"
+        d for d in os.listdir(INPUT_DIR)
+        if os.path.isdir(os.path.join(INPUT_DIR, d)) and d != "dtcwt_preprocessed"
     ]
 
     for cls_name in class_names:
