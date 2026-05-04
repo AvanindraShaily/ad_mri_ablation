@@ -13,7 +13,7 @@ from dataset import load_dataset
 
 # ---- Config ----
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "datalib", "sachin_kumar_ad_dataset")
-MODEL_NAME = "resnet18"
+MODEL_NAME = "resnet50"
 BATCH_SIZE = 32
 EPOCHS = 20
 USE_CBAM = True
