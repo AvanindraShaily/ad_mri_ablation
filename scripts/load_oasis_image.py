@@ -50,7 +50,7 @@ def preprocess(base_dir, hdr_path, cdr, count):
     return count
 
 if __name__ == "__main__":
-    oasis_folder = 'disc1'
+    oasis_folder = os.path.join('datalib', 'disc1')
 
 
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

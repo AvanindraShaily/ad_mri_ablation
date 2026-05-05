@@ -77,8 +77,8 @@ def get_transforms(split="train"):
 
 def load_dataset(data_dir, mode="raw", test_size=0.2, val_size=0.1, seed=42,
                  batch_size=32, target_size=224):
-    if mode not in ("raw", "wavelet"):
-        raise ValueError(f"mode must be 'raw' or 'wavelet', got '{mode}'")
+    if mode not in ("raw", "wavelet", "haar"):
+        raise ValueError(f"mode must be 'raw', 'wavelet', or 'haar', got '{mode}'")
 
     print(f"\nLoading dataset in '{mode}' mode from: {data_dir}")
 
@@ -86,13 +86,14 @@ def load_dataset(data_dir, mode="raw", test_size=0.2, val_size=0.1, seed=42,
     class_names = sorted([
         d for d in os.listdir(data_dir)
         if os.path.isdir(os.path.join(data_dir, d))
+        and d not in ("dtcwt_preprocessed", "haar_preprocessed")
     ])
     class_to_idx = {name: i for i, name in enumerate(class_names)}
 
     all_paths = []
     all_labels = []
 
-    ext = ".npy" if mode == "wavelet" else None
+    ext = ".npy" if mode in ("wavelet", "haar") else None
     for cls_name in class_names:
         cls_path = os.path.join(data_dir, cls_name)
         for fname in sorted(os.listdir(cls_path)):
@@ -137,7 +138,8 @@ def load_dataset(data_dir, mode="raw", test_size=0.2, val_size=0.1, seed=42,
                              num_workers=0, pin_memory=True)
 
     # Print summary
-    in_channels = 13 if mode == "wavelet" else 3
+    in_channels = 13 if mode == "wavelet" else (6 if mode == "haar" else 3)
+
     print(f"Mode: {mode} | Input channels: {in_channels}")
     print(f"Classes: {class_names}")
     print(f"Class mapping: {class_to_idx}")
