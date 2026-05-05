@@ -13,9 +13,10 @@ from dataset import load_dataset
 
 # ---- Config ----
 DATASET = "datalib/sachin_kumar_ad_dataset"
-MODE = "haar"
+MODE = "raw"
 USE_CBAM = False
-MODEL_NAME = "deit_tiny"
+CBAM_PLACEMENT = "block" # "none", "stage", "last", "block"
+MODEL_NAME = "resnet50"
 EPOCHS = 20
 BATCH_SIZE = 32
 LR = 1e-4
@@ -60,10 +61,22 @@ train_loader, val_loader, test_loader, class_names = load_dataset(
 num_classes = len(class_names)
 
 # ---- Model ----
-if USE_CBAM:
+if CBAM_PLACEMENT == "last":
+    from models_cbam_placement import ResNet18_CBAM_LastOnly
+    model = ResNet18_CBAM_LastOnly(num_classes=num_classes, in_channels=IN_CHANNELS).to(DEVICE)
+    print(f"Loaded resnet18 with CBAM LAST STAGE ONLY")
+elif CBAM_PLACEMENT == "block" and MODEL_NAME == "resnet18":
+    from models_cbam_placement import ResNet18_CBAM_BlockLevel
+    model = ResNet18_CBAM_BlockLevel(num_classes=num_classes, in_channels=IN_CHANNELS).to(DEVICE)
+    print(f"Loaded resnet18 with CBAM BLOCK LEVEL")
+elif CBAM_PLACEMENT == "block" and MODEL_NAME == "resnet50":
+    from models_cbam_placement import ResNet50_CBAM_BlockLevel
+    model = ResNet50_CBAM_BlockLevel(num_classes=num_classes, in_channels=IN_CHANNELS).to(DEVICE)
+    print(f"Loaded resnet50 with CBAM BLOCK LEVEL")
+elif USE_CBAM:
     from models_with_cbam import get_model_with_attention
     model = get_model_with_attention(MODEL_NAME, num_classes=num_classes, in_channels=IN_CHANNELS).to(DEVICE)
-    print(f"Loaded {MODEL_NAME} WITH attention")
+    print(f"Loaded {MODEL_NAME} WITH attention (stage level)")
 else:
     model = get_model(MODEL_NAME, num_classes=num_classes, in_channels=IN_CHANNELS).to(DEVICE)
     print(f"Loaded {MODEL_NAME} baseline (no attention)")
@@ -82,7 +95,9 @@ scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS)
 
 # ---- Build save name ----
 suffix = f"_{MODE}"
-if USE_CBAM:
+if CBAM_PLACEMENT != "none":
+    suffix += f"_cbam_{CBAM_PLACEMENT}"
+elif USE_CBAM:
     suffix += "_cbam"
 save_path = os.path.join(RESULTS_DIR, f"{MODEL_NAME}{suffix}_best.pth")
 

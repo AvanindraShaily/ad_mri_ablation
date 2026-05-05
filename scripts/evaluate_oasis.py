@@ -85,11 +85,26 @@ def load_model_from_checkpoint(path):
     use_cbam = checkpoint["use_cbam"]
     in_channels = checkpoint.get("in_channels", 3)
     num_classes = checkpoint["num_classes"]
+    mode = checkpoint.get("mode", "raw")
 
     if checkpoint.get("ordinal", False):
         return None, checkpoint
 
-    if use_cbam:
+    if in_channels != 3:
+        return None, checkpoint
+
+    # Check for CBAM placement models
+    ckpt_filename = os.path.basename(path)
+    if "cbam_last" in ckpt_filename:
+        from models_cbam_placement import ResNet18_CBAM_LastOnly
+        model = ResNet18_CBAM_LastOnly(num_classes=num_classes, in_channels=in_channels)
+    elif "cbam_block" in ckpt_filename and "resnet18" in ckpt_filename:
+        from models_cbam_placement import ResNet18_CBAM_BlockLevel
+        model = ResNet18_CBAM_BlockLevel(num_classes=num_classes, in_channels=in_channels)
+    elif "cbam_block" in ckpt_filename and "resnet50" in ckpt_filename:
+        from models_cbam_placement import ResNet50_CBAM_BlockLevel
+        model = ResNet50_CBAM_BlockLevel(num_classes=num_classes, in_channels=in_channels)
+    elif use_cbam:
         model = get_model_with_attention(name, num_classes=num_classes, in_channels=in_channels)
     else:
         model = get_model(name, num_classes=num_classes, in_channels=in_channels)
@@ -167,9 +182,7 @@ for ckpt_name in checkpoints:
     loader = oasis_loaders[mode]
     acc, bal_acc, per_class = evaluate_on_oasis(model, loader)
 
-    config = f"{checkpoint['model_name']} | {mode}"
-    if checkpoint['use_cbam']:
-        config += " + CBAM"
+    config = ckpt_name.replace("_best.pth", "")
 
     print(f"\n{'-'*60}")
     print(f"Config: {config}")
