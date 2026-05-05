@@ -14,9 +14,9 @@ from dataset import load_dataset
 # ---- Config ----
 DATASET = "datalib/sachin_kumar_ad_dataset"
 MODE = "raw"
-USE_CBAM = False
-CBAM_PLACEMENT = "block" # "none", "stage", "last", "block"
 MODEL_NAME = "resnet50"
+USE_CBAM = False
+CBAM_PLACEMENT = "last"
 EPOCHS = 20
 BATCH_SIZE = 32
 LR = 1e-4
@@ -73,6 +73,10 @@ elif CBAM_PLACEMENT == "block" and MODEL_NAME == "resnet50":
     from models_cbam_placement import ResNet50_CBAM_BlockLevel
     model = ResNet50_CBAM_BlockLevel(num_classes=num_classes, in_channels=IN_CHANNELS).to(DEVICE)
     print(f"Loaded resnet50 with CBAM BLOCK LEVEL")
+elif CBAM_PLACEMENT == "last" and MODEL_NAME == "resnet50":
+    from models_cbam_placement import ResNet50_CBAM_LastOnly
+    model = ResNet50_CBAM_LastOnly(num_classes=num_classes, in_channels=IN_CHANNELS).to(DEVICE)
+    print(f"Loaded resnet50 with CBAM LAST STAGE ONLY")
 elif USE_CBAM:
     from models_with_cbam import get_model_with_attention
     model = get_model_with_attention(MODEL_NAME, num_classes=num_classes, in_channels=IN_CHANNELS).to(DEVICE)

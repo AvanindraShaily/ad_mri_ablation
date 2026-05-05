@@ -123,7 +123,34 @@ class ResNet50_CBAM_BlockLevel(nn.Module):
         x = x.view(x.size(0), -1)
         x = self.fc(x)
         return x
+class ResNet50_CBAM_LastOnly(nn.Module):
+    """CBAM only after the final stage for ResNet-50."""
+    def __init__(self, num_classes=4, in_channels=3):
+        super().__init__()
+        resnet = models.resnet50(weights="IMAGENET1K_V1")
+        if in_channels != 3:
+            _replace_first_conv(resnet, "conv1", in_channels)
 
+        self.stem = nn.Sequential(resnet.conv1, resnet.bn1, resnet.relu, resnet.maxpool)
+        self.layer1 = resnet.layer1
+        self.layer2 = resnet.layer2
+        self.layer3 = resnet.layer3
+        self.layer4 = resnet.layer4
+        self.avgpool = resnet.avgpool
+
+        self.cbam4 = CBAM(2048)
+        self.fc = nn.Linear(2048, num_classes)
+
+    def forward(self, x):
+        x = self.stem(x)
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.cbam4(self.layer4(x))
+        x = self.avgpool(x)
+        x = x.view(x.size(0), -1)
+        x = self.fc(x)
+        return x
 class ResNet18_CBAM_BlockLevel(nn.Module):
     """CBAM inside every residual block (original paper's approach)."""
     def __init__(self, num_classes=4, in_channels=3):
