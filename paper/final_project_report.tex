@@ -1,0 +1,101 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=0.5in]{geometry}
+
+% Packages for figures, links, math, and multiple authors
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{authblk}
+\usepackage{amsmath} % Added for math equations
+\usepackage{booktabs} % Added for professional tables
+
+\title{\textbf{Final Project Report: [Insert Your Project Title Here]}}
+
+% Cleaned up the author block to use authblk properly
+\author[1]{Justin Case}
+\author[1]{Artie Fishul}
+\affil[1]{Department of Computer Science, University of Wisconsin-Madison}
+\date{\vspace{-5ex}} 
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Provide a concise summary of your entire project in 4-5 sentences. State the problem, your proposed approach or methodology, the core experiments conducted, and the primary results or takeaways. The abstract should be the very last thing you write.
+\end{abstract}
+
+% --- Section 1: Introduction ---
+\section{Introduction}
+Clearly describe the specific problem you tackled. Set the stage for your entire project and define the exact scope of your work. 
+
+What motivated you to choose this problem? Explain why this problem is important to solve. Discuss the gap in current systems, literature, or practical applications that your project addresses. Outline your core contributions at the end of this section.
+
+% --- Section 2: Related Work ---
+\section{Related Work}
+Briefly survey the existing literature and prior attempts to solve this problem. How does your approach differ from or build upon these previous works? Cite the most relevant papers here.
+
+% --- Section 3: Architecture / Methodology ---
+\section{Methodology}
+Detail the technical approach you took. Describe the algorithms, mathematical models, or system architectures you used. Provide enough detail that another student could theoretically reproduce your work.
+
+You can use equations to formally define your problem or model. For example, the objective function is defined as:
+\begin{equation}
+    \mathcal{L}(\theta) = \frac{1}{N} \sum_{i=1}^{N} \left( y_i - f_\theta(x_i) \right)^2 + \lambda \|\theta\|^2
+    \label{eq:loss}
+\end{equation}
+
+You can also use figures to explain your system architecture. Figure \ref{fig:architecture} shows an example diagram.
+
+% Example Figure Environment
+\begin{figure}[h]
+    \centering
+    % \includegraphics[width=0.4\textwidth]{image-name.png}
+    \framebox[0.4\textwidth]{\rule{0pt}{1in} Placeholder for Diagram}
+    \caption{A diagram of the system architecture. Visuals explain complex ideas quickly.}
+    \label{fig:architecture}
+\end{figure}
+
+% --- Section 4: Experiments & Results ---
+\section{Experiments and Results}
+This is the core of your final report. Evaluate your methodology. 
+
+\subsection{Datasets and Setup}
+Describe the data you used (size, features, source) and your experimental setup (e.g., hyperparameter choices, evaluation metrics).
+
+\subsection{Results}
+Present your findings. Did your approach work? How does it compare to baselines? Use tables to display quantitative results cleanly, as shown in Table \ref{tab:results}.
+
+% Example Table Environment
+\begin{table}[h]
+    \centering
+    \begin{tabular}{lcc}
+        \toprule
+        \textbf{Method} & \textbf{Accuracy (\%)} & \textbf{Speed (FPS)} \\
+        \midrule
+        Baseline Approach & 78.4 & 30 \\
+        Our Proposed Method & \textbf{85.2} & \textbf{45} \\
+        \bottomrule
+    \end{tabular}
+    \caption{Comparison of our proposed method against the baseline.}
+    \label{tab:results}
+\end{table}
+
+% --- Section 5: Discussion & Limitations ---
+\section{Discussion and Limitations}
+Interpret your results. Why did certain things work while others failed? Be honest about the limitations of your approach. If you had to fall back to your "Plan B" from the proposal, explain why the primary plan encountered obstacles.
+
+% --- Section 6: Conclusion ---
+\section{Conclusion}
+Summarize the project and your findings. What are the key takeaways? 
+
+% --- Section 7: Team Contributions ---
+\section{Team Contributions}
+If this is a group project, explicitly detail what each team member contributed to the final project (e.g., "Justin handled data preprocessing and baseline implementation; Artie designed the core architecture and wrote the evaluation scripts.").
+
+% --- References ---
+% Create a file references.bib in the same latex project directory and uncomment the next two lines
+\bibliographystyle{plain} 
+\bibliography{references} 
+
+\end{document}
