@@ -77,44 +77,57 @@ def build_oasis_loader(mode, batch_size=32):
     loader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=True)
     print(f"  Loaded {len(dataset)} images in '{mode}' mode")
     return loader
+def is_ordinal(ckpt_filename):
+    return "ordinal" in ckpt_filename
 
+
+def coral_predict(logits):
+    probas = torch.sigmoid(logits)
+    predicted = torch.sum(probas > 0.5, dim=1)
+    return predicted
 
 def load_model_from_checkpoint(path):
-    checkpoint = torch.load(path, map_location=DEVICE)
+    ckpt_filename = os.path.basename(path)
+    checkpoint = torch.load(path, map_location=DEVICE, weights_only=False)
     name = checkpoint["model_name"]
-    use_cbam = checkpoint["use_cbam"]
+    use_cbam = checkpoint.get("use_cbam", False)
     in_channels = checkpoint.get("in_channels", 3)
     num_classes = checkpoint["num_classes"]
-    mode = checkpoint.get("mode", "raw")
-
-    if checkpoint.get("ordinal", False):
-        return None, checkpoint
-
-    if in_channels != 3:
-        return None, checkpoint
-
-    # Check for CBAM placement models
-    ckpt_filename = os.path.basename(path)
-    if "cbam_last" in ckpt_filename:
+    
+    model = None
+    
+    # Ordinal models — use the ordinal model factory
+    if is_ordinal(ckpt_filename):
+        from ordinal_models import get_ordinal_model
+        model = get_ordinal_model(name, num_classes=num_classes, 
+                                   in_channels=in_channels, use_cbam=use_cbam)
+    # CBAM placement variants
+    elif "cbam_last" in ckpt_filename and "resnet18" in ckpt_filename:
         from models_cbam_placement import ResNet18_CBAM_LastOnly
         model = ResNet18_CBAM_LastOnly(num_classes=num_classes, in_channels=in_channels)
+    elif "cbam_last" in ckpt_filename and "resnet50" in ckpt_filename:
+        from models_cbam_placement import ResNet50_CBAM_LastOnly
+        model = ResNet50_CBAM_LastOnly(num_classes=num_classes, in_channels=in_channels)
     elif "cbam_block" in ckpt_filename and "resnet18" in ckpt_filename:
         from models_cbam_placement import ResNet18_CBAM_BlockLevel
         model = ResNet18_CBAM_BlockLevel(num_classes=num_classes, in_channels=in_channels)
     elif "cbam_block" in ckpt_filename and "resnet50" in ckpt_filename:
         from models_cbam_placement import ResNet50_CBAM_BlockLevel
         model = ResNet50_CBAM_BlockLevel(num_classes=num_classes, in_channels=in_channels)
-    elif use_cbam:
+    elif "_cbam" in ckpt_filename:
         model = get_model_with_attention(name, num_classes=num_classes, in_channels=in_channels)
     else:
         model = get_model(name, num_classes=num_classes, in_channels=in_channels)
-
+    
+    if model is None:
+        raise RuntimeError(f"No branch matched for checkpoint: {ckpt_filename}")
+    
     model.load_state_dict(checkpoint["model_state_dict"])
     model = model.to(DEVICE).eval()
     return model, checkpoint
 
 
-def evaluate_on_oasis(model, loader):
+def evaluate_on_oasis(model, loader, ordinal=False):
     all_preds = []
     all_labels_mapped = []
 
@@ -122,7 +135,11 @@ def evaluate_on_oasis(model, loader):
         for images, labels in loader:
             images = images.to(DEVICE)
             outputs = model(images)
-            _, predicted = outputs.max(1)
+            
+            if ordinal:
+                predicted = coral_predict(outputs)
+            else:
+                _, predicted = outputs.max(1)
 
             for pred, label in zip(predicted.cpu().tolist(), labels.tolist()):
                 kaggle_label = oasis_to_kaggle[label]
@@ -165,12 +182,11 @@ results = []
 
 for ckpt_name in checkpoints:
     ckpt_path = os.path.join(RESULTS_DIR, ckpt_name)
-    model, checkpoint = load_model_from_checkpoint(ckpt_path)
-
-    if model is None:
-        ordinal = checkpoint.get("ordinal", False)
-        if ordinal:
-            print(f"\nSkipping {ckpt_name} (ordinal model)")
+    
+    try:
+        model, checkpoint = load_model_from_checkpoint(ckpt_path)
+    except Exception as e:
+        print(f"\n[ERROR] {ckpt_name}: {type(e).__name__}: {str(e)[:120]}")
         continue
 
     mode = checkpoint["mode"]
@@ -180,21 +196,21 @@ for ckpt_name in checkpoints:
         continue
 
     loader = oasis_loaders[mode]
-    acc, bal_acc, per_class = evaluate_on_oasis(model, loader)
+    ordinal = is_ordinal(ckpt_name)
+    acc, bal_acc, per_class = evaluate_on_oasis(model, loader, ordinal=ordinal)
 
     config = ckpt_name.replace("_best.pth", "")
 
     print(f"\n{'-'*60}")
-    print(f"Config: {config}")
+    print(f"Config: {config}{' [ORDINAL]' if ordinal else ''}")
     print(f"Accuracy: {acc:.4f} | Balanced Accuracy: {bal_acc:.4f}")
     for name, (correct, total, class_acc) in per_class.items():
         print(f"  {name}: {correct}/{total} = {class_acc:.4f}")
 
-    results.append({"config": config, "acc": acc, "bal_acc": bal_acc})
+    results.append({"config": config, "acc": acc, "bal_acc": bal_acc, "ordinal": ordinal})
 
     del model
     torch.cuda.empty_cache()
-
 # Summary
 print(f"\n{'='*80}")
 print("SUMMARY")

@@ -61,10 +61,14 @@ train_loader, val_loader, test_loader, class_names = load_dataset(
 num_classes = len(class_names)
 
 # ---- Model ----
-if CBAM_PLACEMENT == "last":
+if CBAM_PLACEMENT == "last" and MODEL_NAME == "resnet18":
     from models_cbam_placement import ResNet18_CBAM_LastOnly
     model = ResNet18_CBAM_LastOnly(num_classes=num_classes, in_channels=IN_CHANNELS).to(DEVICE)
     print(f"Loaded resnet18 with CBAM LAST STAGE ONLY")
+elif CBAM_PLACEMENT == "last" and MODEL_NAME == "resnet50":
+    from models_cbam_placement import ResNet50_CBAM_LastOnly
+    model = ResNet50_CBAM_LastOnly(num_classes=num_classes, in_channels=IN_CHANNELS).to(DEVICE)
+    print(f"Loaded resnet50 with CBAM LAST STAGE ONLY")
 elif CBAM_PLACEMENT == "block" and MODEL_NAME == "resnet18":
     from models_cbam_placement import ResNet18_CBAM_BlockLevel
     model = ResNet18_CBAM_BlockLevel(num_classes=num_classes, in_channels=IN_CHANNELS).to(DEVICE)
@@ -73,10 +77,6 @@ elif CBAM_PLACEMENT == "block" and MODEL_NAME == "resnet50":
     from models_cbam_placement import ResNet50_CBAM_BlockLevel
     model = ResNet50_CBAM_BlockLevel(num_classes=num_classes, in_channels=IN_CHANNELS).to(DEVICE)
     print(f"Loaded resnet50 with CBAM BLOCK LEVEL")
-elif CBAM_PLACEMENT == "last" and MODEL_NAME == "resnet50":
-    from models_cbam_placement import ResNet50_CBAM_LastOnly
-    model = ResNet50_CBAM_LastOnly(num_classes=num_classes, in_channels=IN_CHANNELS).to(DEVICE)
-    print(f"Loaded resnet50 with CBAM LAST STAGE ONLY")
 elif USE_CBAM:
     from models_with_cbam import get_model_with_attention
     model = get_model_with_attention(MODEL_NAME, num_classes=num_classes, in_channels=IN_CHANNELS).to(DEVICE)

@@ -76,19 +76,30 @@ def get_transforms(split="train"):
 
 
 def load_dataset(data_dir, mode="raw", test_size=0.2, val_size=0.1, seed=42,
-                 batch_size=32, target_size=224):
+                 batch_size=32, target_size=224, ordinal_ordering=False):
     if mode not in ("raw", "wavelet", "haar"):
         raise ValueError(f"mode must be 'raw', 'wavelet', or 'haar', got '{mode}'")
 
     print(f"\nLoading dataset in '{mode}' mode from: {data_dir}")
 
-    # Collect all file paths and labels
-    class_names = sorted([
+    # Define explicit ordinal severity ordering
+    ORDINAL_CLASS_ORDER = ["Non_Demented", "Very_Mild_Demented", "Mild_Demented", "Moderate_Demented"]
+    
+    available_classes = sorted([
         d for d in os.listdir(data_dir)
         if os.path.isdir(os.path.join(data_dir, d))
         and d not in ("dtcwt_preprocessed", "haar_preprocessed")
     ])
+    
+    if ordinal_ordering:
+        # Filter ORDINAL_CLASS_ORDER to only classes present in the dataset
+        class_names = [c for c in ORDINAL_CLASS_ORDER if c in available_classes]
+    else:
+        # Original alphabetical ordering for CE training
+        class_names = available_classes
+    
     class_to_idx = {name: i for i, name in enumerate(class_names)}
+    
 
     all_paths = []
     all_labels = []

@@ -15,7 +15,7 @@ from dataset import load_dataset
 # ---- Config ----
 DATASET = "datalib/sachin_kumar_ad_dataset"
 MODE = "raw"                    # best config mode
-MODEL_NAME = "resnet18"         # model to train
+MODEL_NAME = "deit_tiny"         # model to train
 USE_CBAM = False                # best config CBAM setting
 EPOCHS = 20
 BATCH_SIZE = 32
@@ -44,7 +44,7 @@ print(f"{'='*50}")
 
 # ---- Data ----
 train_loader, val_loader, test_loader, class_names = load_dataset(
-    DATA_DIR, mode=MODE, batch_size=BATCH_SIZE
+    DATA_DIR, mode=MODE, batch_size=BATCH_SIZE, ordinal_ordering=True
 )
 num_classes = len(class_names)
 # ---- Weighted sampling for balanced training ----
