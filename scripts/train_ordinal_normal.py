@@ -3,9 +3,9 @@ import sys
 import time
 import torch
 import torch.nn as nn
-from torch.utils.data import WeightedRandomSampler
 from coral_pytorch.losses import CoralLoss
 from coral_pytorch.dataset import levels_from_labelbatch
+
 script_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, script_dir)
 
@@ -14,9 +14,9 @@ from dataset import load_dataset
 
 # ---- Config ----
 DATASET = "datalib/sachin_kumar_ad_dataset"
-MODE = "raw"                    # best config mode
-MODEL_NAME = "resnet50"         # model to train
-USE_CBAM = False                # best config CBAM setting
+MODE = "raw"
+MODEL_NAME = "efficientnet_b0"
+USE_CBAM = False
 EPOCHS = 20
 BATCH_SIZE = 32
 LR = 1e-4
@@ -34,7 +34,7 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 os.makedirs(RESULTS_DIR, exist_ok=True)
 
 print(f"{'='*50}")
-print(f"ORDINAL REGRESSION TRAINING")
+print(f"ORDINAL REGRESSION TRAINING (STANDARD)")
 print(f"Mode:        {MODE}")
 print(f"Model:       {MODEL_NAME}")
 print(f"CBAM:        {USE_CBAM}")
@@ -47,19 +47,6 @@ train_loader, val_loader, test_loader, class_names = load_dataset(
     DATA_DIR, mode=MODE, batch_size=BATCH_SIZE, ordinal_ordering=True
 )
 num_classes = len(class_names)
-# ---- Weighted sampling for balanced training ----
-train_labels = train_loader.dataset.labels
-class_counts = [train_labels.count(i) for i in range(num_classes)]
-sample_weights = [1.0 / class_counts[label] for label in train_labels]
-sampler = WeightedRandomSampler(sample_weights, num_samples=len(sample_weights), replacement=True)
-
-# Rebuild train loader with sampler (can't use shuffle with sampler)
-from torch.utils.data import DataLoader
-train_loader = DataLoader(
-    train_loader.dataset, batch_size=BATCH_SIZE, sampler=sampler,
-    num_workers=0, pin_memory=True
-)
-print(f"Weighted sampler: {dict(zip(class_names, class_counts))}")
 
 # ---- Model ----
 model = get_ordinal_model(MODEL_NAME, num_classes=num_classes,
@@ -74,8 +61,9 @@ scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS)
 suffix = f"_{MODE}"
 if USE_CBAM:
     suffix += "_cbam"
-suffix += "_ordinal_balanced"
+suffix += "_ordinal"
 save_path = os.path.join(RESULTS_DIR, f"{MODEL_NAME}{suffix}_best.pth")
+print(f"Save path: {save_path}")
 
 # ---- Training loop ----
 best_val_acc = 0.0
@@ -83,7 +71,6 @@ best_val_acc = 0.0
 for epoch in range(EPOCHS):
     epoch_start = time.time()
 
-    # Train
     model.train()
     train_loss = 0.0
     train_correct = 0
@@ -93,7 +80,6 @@ for epoch in range(EPOCHS):
         images = images.to(DEVICE)
         labels = torch.tensor(labels).long().to(DEVICE)
         levels = levels_from_labelbatch(labels, num_classes=num_classes).float().to(DEVICE)
-
 
         optimizer.zero_grad()
         logits = model(images)
@@ -110,7 +96,6 @@ for epoch in range(EPOCHS):
     train_loss /= train_total
     train_acc = train_correct / train_total
 
-    # Validate
     model.eval()
     val_loss = 0.0
     val_correct = 0
@@ -121,7 +106,6 @@ for epoch in range(EPOCHS):
             images = images.to(DEVICE)
             labels = torch.tensor(labels).long().to(DEVICE)
             levels = levels_from_labelbatch(labels, num_classes=num_classes).float().to(DEVICE)
-
 
             logits = model(images)
             loss = criterion(logits, levels)
